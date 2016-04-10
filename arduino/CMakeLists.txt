@@ -49,6 +49,8 @@ add_custom_target(firmware_binary ALL
     COMMAND ${AVR_OBJCOPY} -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $<TARGET_FILE:firmware> firmware.eep
     COMMAND ${AVR_OBJCOPY} -O ihex -R .eeprom $<TARGET_FILE:firmware> firware.hex
 )
-set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES firmware.hex)
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
+    "firmware.eep;firmware.hex"
+)
 
 add_dependencies(firmware_binary firmware)
