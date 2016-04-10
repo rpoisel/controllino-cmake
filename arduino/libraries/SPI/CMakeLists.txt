@@ -1,16 +1,16 @@
 file(GLOB SPI_LIB_SRC
-    ${ARDUINO_ESP8266_DIR}/libraries/SPI/*.cpp
+    ${ARDUINO_AVR_DIR}/libraries/SPI/src/*.cpp
 )
 
-add_library(esp8266spi STATIC
+add_library(arduino_spi STATIC
     ${SPI_LIB_SRC}
 )
 
-target_include_directories(esp8266spi PUBLIC
-    ${ARDUINO_ESP8266_DIR}/libraries/SPI
+target_include_directories(arduino_spi PUBLIC
+    ${ARDUINO_AVR_DIR}/libraries/SPI/src
 )
 
-target_link_libraries(esp8266spi PUBLIC
+target_link_libraries(arduino_spi PUBLIC
     arduino
 )
 

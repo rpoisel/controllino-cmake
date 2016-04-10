@@ -1,58 +1,20 @@
-set(ARDUINO_ESP8266_DIR ${ARDUINO_DIR}/packages/esp8266/hardware/esp8266/2.1.0 CACHE PATH "Path to the directory containing ESP8266 specific arduino files")
-if (ARDUINO_ESP8266_DIR STREQUAL "")
-    message(FATAL_ERROR "ARDUINO_ESP8266_DIR has not been set.")
+set(ARDUINO_DIR "${USER_HOME}/.arduino15" CACHE PATH "Path to the directory containing the Arduino package files")
+IF(NOT (EXISTS "${ARDUINO_DIR}" AND IS_DIRECTORY "${ARDUINO_DIR}"))
+    message(FATAL_ERROR "${ARDUINO_DIR} does not exist or is not a directory.")
 endif ()
 
-add_library(ESP8266_SDK INTERFACE)
-
-find_library(ESP8266_SDK_LIB_AT at ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_AXTLS axtls ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_CRYPTO crypto ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_ESPNOW espnow ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_HAL hal ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_JSON json ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_LWIP lwip ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_MAIN main ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_NET80211 net80211 ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_PHY phy ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_PP pp ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_PWM pwm ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_SMARTCONFIG smartconfig ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_SSL ssl ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_UPGRADE upgrade ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_WPA wpa ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-find_library(ESP8266_SDK_LIB_WPS wps ${ARDUINO_ESP8266_DIR}/tools/sdk/lib)
-
-target_link_libraries(ESP8266_SDK INTERFACE
-    m
-    gcc
-    ${ESP8266_SDK_LIB_AT}
-    ${ESP8266_SDK_LIB_AXTLS}
-    ${ESP8266_SDK_LIB_CRYPTO}
-    ${ESP8266_SDK_LIB_ESPNOW}
-    ${ESP8266_SDK_LIB_HAL}
-    ${ESP8266_SDK_LIB_JSON}
-    ${ESP8266_SDK_LIB_LWIP}
-    ${ESP8266_SDK_LIB_MAIN}
-    ${ESP8266_SDK_LIB_NET80211}
-    ${ESP8266_SDK_LIB_PHY}
-    ${ESP8266_SDK_LIB_PP}
-    ${ESP8266_SDK_LIB_PWM}
-    ${ESP8266_SDK_LIB_SMARTCONFIG}
-    ${ESP8266_SDK_LIB_SSL}
-    ${ESP8266_SDK_LIB_UPGRADE}
-    ${ESP8266_SDK_LIB_WPA}
-    ${ESP8266_SDK_LIB_WPS}
-)
+set(ARDUINO_AVR_DIR ${ARDUINO_DIR}/packages/arduino/hardware/avr/1.6.10 CACHE PATH "Path to the directory containing AVR specific arduino files")
+IF(NOT (EXISTS "${ARDUINO_AVR_DIR}" AND IS_DIRECTORY "${ARDUINO_AVR_DIR}"))
+    message(FATAL_ERROR "ARDUINO_AVR_DIR has not been set.")
+endif ()
 
 file(GLOB_RECURSE ARDUINO_SRC
-    ${ARDUINO_ESP8266_DIR}/cores/esp8266/*.c
-    ${ARDUINO_ESP8266_DIR}/cores/esp8266/spiffs/*.c
-    ${ARDUINO_ESP8266_DIR}/cores/esp8266/*.cpp
+    ${ARDUINO_AVR_DIR}/cores/arduino/*.c
+    ${ARDUINO_AVR_DIR}/cores/arduino/*.cpp
 )
 
 file(GLOB ARDUINO_SRC_ASM
-    ${ARDUINO_ESP8266_DIR}/cores/esp8266/*.S
+    ${ARDUINO_AVR_DIR}/cores/arduino/*.S
 )
 
 set_source_files_properties(${ARDUINO_SRC_ASM} PROPERTIES
@@ -65,42 +27,28 @@ add_library(arduino STATIC
     ${ARDUINO_SRC_ASM}
 )
 
+target_link_libraries(arduino PUBLIC
+    m
+)
+
 target_include_directories(arduino PUBLIC
-    ${ARDUINO_ESP8266_DIR}/tools/sdk/include
-    ${ARDUINO_ESP8266_DIR}/cores/esp8266
-    ${ARDUINO_ESP8266_DIR}/variants/generic
+    ${ARDUINO_AVR_DIR}/cores/arduino
+    ${ARDUINO_AVR_DIR}/variants/${ARDUINO_VARIANT}
 )
 
 target_compile_definitions(arduino PUBLIC
-    -DF_CPU=80000000L
-    -DARDUINO=10606
-    -DARDUINO_ESP8266_ESP01
-    -DARDUINO_ARCH_ESP8266
-    -DESP8266
-)
-
-target_compile_options(arduino PUBLIC
-    -U__STRICT_ANSI__
-)
-
-target_link_libraries(arduino PUBLIC
-    ESP8266_SDK
+    -DF_CPU=16000000L
+    -DARDUINO=10608
+    -D${ARDUINO_ARCH}
+    -DARDUINO_ARCH_AVR
 )
 
 add_subdirectory(libraries)
 
-set_target_properties(firmware PROPERTIES
-    LINK_FLAGS "-L${ARDUINO_ESP8266_DIR}/tools/sdk/ld -Teagle.flash.512k0.ld -u call_user_start -Wl,-wrap,system_restart_local -Wl,-wrap,register_chipv6_phy"
+add_custom_target(firmware_binary ALL
+    COMMAND ${AVR_OBJCOPY} -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $<TARGET_FILE:firmware> firmware.eep
+    COMMAND ${AVR_OBJCOPY} -O ihex -R .eeprom $<TARGET_FILE:firmware> firware.hex
 )
-
-add_custom_target(
-    firmware_binary ALL
-    COMMAND ${ESP8266_ESPTOOL} -eo ${ARDUINO_ESP8266_DIR}/bootloaders/eboot/eboot.elf -bo firmware.bin -bf 40 -bz ${ESP8266_FLASH_SIZE} -bs .text -bp 4096 -ec -eo $<TARGET_FILE:firmware> -bs .irom0.text -bs .text -bs .data -bs .rodata -bc -ec
-)
-set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES firmware.bin)
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES firmware.hex)
 
 add_dependencies(firmware_binary firmware)
-
-add_custom_target(flash COMMAND ${ESP8266_ESPTOOL} -vv -cd ck -cb 115200 -cp ${ESP8266_ESPTOOL_COM_PORT} -ca 0x00000 -cf firmware.bin)
-
-add_dependencies(flash firmware_binary)

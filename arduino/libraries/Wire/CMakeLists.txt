@@ -1,16 +1,16 @@
 file(GLOB WIRE_LIB_SRC
-    ${ARDUINO_ESP8266_DIR}/libraries/Wire/*.cpp
+    ${ARDUINO_AVR_DIR}/libraries/Wire/src/*.cpp
 )
 
-add_library(esp8266wire STATIC
+add_library(arduino_wire STATIC
     ${WIRE_LIB_SRC}
 )
 
-target_include_directories(esp8266wire PUBLIC
-    ${ARDUINO_ESP8266_DIR}/libraries/Wire
+target_include_directories(arduino_wire PUBLIC
+    ${ARDUINO_AVR_DIR}/libraries/Wire
 )
 
-target_link_libraries(esp8266wire PUBLIC
+target_link_libraries(arduino_wire PUBLIC
     arduino
 )
 
