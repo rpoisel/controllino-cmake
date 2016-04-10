@@ -1,5 +1,6 @@
+set(BASE_DIR_WIRE ${ARDUINO_AVR_DIR}/libraries/Wire/src)
 file(GLOB WIRE_LIB_SRC
-    ${ARDUINO_AVR_DIR}/libraries/Wire/src/*.cpp
+    ${BASE_DIR_WIRE}/*.cpp
 )
 
 add_library(arduino_wire STATIC
@@ -7,13 +8,18 @@ add_library(arduino_wire STATIC
 )
 
 target_include_directories(arduino_wire PUBLIC
-    ${ARDUINO_AVR_DIR}/libraries/Wire
+    ${BASE_DIR_WIRE}
 )
 
 target_link_libraries(arduino_wire PUBLIC
     arduino
 )
 
+install(TARGETS arduino_wire
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
 
-
+install_absolute(${BASE_DIR_WIRE} h/Wire *.h)
 

@@ -1,5 +1,5 @@
 add_executable(firmware
-    main.c
+    main.cpp
 )
 
 target_link_libraries(firmware
