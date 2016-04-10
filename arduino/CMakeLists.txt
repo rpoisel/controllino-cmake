@@ -33,7 +33,7 @@ target_link_libraries(arduino PUBLIC
 
 target_include_directories(arduino PUBLIC
     ${ARDUINO_AVR_DIR}/cores/arduino
-    ${ARDUINO_AVR_DIR}/variants/${ARDUINO_VARIANT}
+    ${ARDUINO_AVR_DIR}/variants/standard
 )
 
 target_compile_definitions(arduino PUBLIC
